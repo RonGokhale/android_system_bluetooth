@@ -322,9 +322,6 @@ parse_cmd_line(int argc, char **argv)
 void
 init_uart()
 {
-#ifdef BCM_SEMC
-	usleep(150*1000);
-#endif
 	tcflush(uart_fd, TCIOFLUSH);
 	tcgetattr(uart_fd, &termios);
 
@@ -436,9 +433,7 @@ proc_patchram()
 
 	read_event(uart_fd, buffer);
 
-#ifndef BOARD_HAS_BCM4330
-    read(uart_fd, &buffer[0], 2);
-#endif
+	read(uart_fd, &buffer[0], 2);
 
 	usleep(50000);
 
@@ -494,6 +489,9 @@ proc_enable_hci()
 {
 	int i = N_HCI;
 	int proto = HCI_UART_H4;
+	if (enable_lpm) {
+		proto = HCI_UART_LL;
+	}
 	if (ioctl(uart_fd, TIOCSETD, &i) < 0) {
 		fprintf(stderr, "Can't set line discipline\n");
 		return;
@@ -579,5 +577,6 @@ main (int argc, char **argv)
 			sleep(UINT_MAX);
 		}
 	}
+
 	exit(0);
 }
